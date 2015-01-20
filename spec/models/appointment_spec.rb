@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Appointment do
-  it { should belong_to(:mentor) }
+  it { should have_one(:mentor) }
   it { should belong_to(:mentee) }
   it { should have_many(:kudos) }
 
@@ -13,8 +13,8 @@ describe Appointment do
       availability_attributes = FactoryGirl.attributes_for(:availability,
         start_time: @start_time,
         city: 'Chicago')
-      @availability = @mentor.availabilities.create(availability_attributes)
-      @appointment = Appointment.create(:mentor => @mentor, :mentee => @mentee, :availability => @availability)
+      @availability = @mentor.availabilities.create!(availability_attributes)
+      @appointment = Appointment.create!(:mentor => @mentor, :mentee => @mentee, :availability => @availability)
     end
 
     context "with only a mentor" do
@@ -40,6 +40,14 @@ describe Appointment do
 
         it "should have a city" do
           expect(@appointment.city).to eq(@availability.city)
+        end
+
+        it "should have a timezone" do
+          expect(@appointment.timezone).to eq(@availability.timezone)
+        end
+
+        it "should have a location" do
+          expect(@appointment.location).to eq(@availability.location)
         end
       end
 

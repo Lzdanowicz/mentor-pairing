@@ -1,17 +1,13 @@
 class Appointment < ActiveRecord::Base
   include LocaltimeAdjustment
 
-  attr_accessor :availability
+  has_one :availability
+  has_one :mentor, through: :availability
 
-  belongs_to :mentor, :class_name => "User"
   belongs_to :mentee, :class_name => "User"
-  has_many :kudos
-
-  validates :mentor_id, :presence => true
   validates :mentee, :presence => true
 
-  before_create :parse_availability
-  after_create :kill_availability, :create_kudo
+  has_many :kudos
 
   scope :visible, Proc.new {
     where("end_time > ?", Time.now)
@@ -22,6 +18,7 @@ class Appointment < ActiveRecord::Base
   }
 
   scope :recently_ended, -> { where(:end_time => (1.hour.ago..Time.now)) }
+  after_create :create_kudo
   scope :feedback_not_sent, -> { where(:feedback_sent => false) }
   scope :ready_for_feedback, -> { recently_ended.feedback_not_sent }
 
@@ -32,21 +29,38 @@ class Appointment < ActiveRecord::Base
                   appointment_arel[:mentor_id].eq(user.id).
                   or(appointment_arel[:mentee_id].eq(user.id))
                 ).first
+
+
+  def start_time
+    availability.start_time
+  end
+
+  def end_time
+    availability.end_time
+  end
+
+  def city
+    availability.city
+  end
+
+  def timezone
+    availability.timezone
+  end
+
+  def location
+    availability.location
+  end
+
+  def self.find_by_id_and_user(appointment_id, user)
+    mentee_id_field = Appointment.arel_table[:mentee_id]
+    mentor_id_field = Availability.arel_table[:mentor_id]
+    self.joins(:availability)
+        .where(mentor_id_field.eq(user.id).or(mentee_id_field.eq(user.id)))
+        .find_by(id: appointment_id)
+
   end
 
   private
-
-  def parse_availability
-    self.start_time = availability.start_time
-    self.end_time   = availability.end_time
-    self.timezone   = availability.timezone
-    self.location   = availability.location
-    self.city       = availability.city
-  end
-
-  def kill_availability
-    availability.destroy
-  end
 
   def create_kudo
     self.kudos.create(mentor_id: self.mentor.id, mentee_id: self.mentee_id)
