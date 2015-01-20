@@ -79,7 +79,32 @@ describe Appointment do
       appointment = FactoryGirl.create(:appointment, :availability => availability)
       Appointment.visible.should_not include(appointment)
     end
+  end
 
+  describe 'past' do
+    it 'is not past when the appointment is entirely in the future' do
+      availability = FactoryGirl.create(:availability, { :start_time => Time.now + 4.hours })
+      appointment = FactoryGirl.create(:appointment, :availability => availability)
+      Appointment.past.should_not include(appointment)
+    end
+
+    it 'is not past when the appointment has begun, but not ended' do
+      availability = FactoryGirl.create(:availability, {
+        :start_time => Time.now - 30.minutes,
+        :duration => 60
+      })
+      appointment = FactoryGirl.create(:appointment, :availability => availability)
+      Appointment.past.should_not include(appointment)
+    end
+
+    it 'is past when the appointment has ended' do
+      availability = FactoryGirl.create(:availability, {
+        :start_time => Time.now - 2.hours,
+        :duration => 60
+      })
+      appointment = FactoryGirl.create(:appointment, :availability => availability)
+      Appointment.past.should include(appointment)
+    end
   end
 
   context ".find_by_id_and_user" do

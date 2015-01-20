@@ -1,14 +1,8 @@
 class WeeklyMetricsPresenter
-  def initialize(for_week_of = nil)
-    @for_week_of = for_week_of
-  end
+  attr_reader :for_week_of
 
-  def for_week_of
-    if @for_week_of
-      Time.parse(@for_week_of)
-    else
-      Time.now
-    end
+  def initialize(for_week_of = nil)
+    @for_week_of = for_week_of ? Time.parse(for_week_of) : Time.now
   end
 
   def starting
@@ -20,7 +14,8 @@ class WeeklyMetricsPresenter
   end
 
   def total_appointments
-    Appointment.where(:start_time => (starting..ending)).count
+    Availability.starting_between(starting, ending).count
+    # Appointment.where(:start_time => (starting..ending)).count
   end
 
   def has_included_date?(date)
@@ -28,6 +23,6 @@ class WeeklyMetricsPresenter
   end
 
   def total_abandoned_availabilties
-    Availability.abandoned.where(:start_time => (starting..ending)).count
+    Availability.starting_between(starting, ending).abandoned.count
   end
 end

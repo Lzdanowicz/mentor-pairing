@@ -9,26 +9,25 @@ class Appointment < ActiveRecord::Base
 
   has_many :kudos
 
-  scope :visible, Proc.new {
-    where("end_time > ?", Time.now)
+  scope :visible, -> {
+    end_time_field = Availability.arel_table[:end_time]
+    joins(:availability).where(end_time_field.gt(Time.now))
   }
 
-  scope :past, Proc.new {
-    where("end_time < ?", Time.now)
+  scope :past, -> {
+    end_time_field = Availability.arel_table[:end_time]
+    joins(:availability).where(end_time_field.lt(Time.now))
   }
 
-  scope :recently_ended, -> { where(:end_time => (1.hour.ago..Time.now)) }
   after_create :create_kudo
+
+  scope :recently_ended, -> {
+    end_time_field = Availability.arel_table[:end_time]
+    joins(:availability).where(end_time_field.in(1.hour.ago..Time.now))
+  }
   scope :feedback_not_sent, -> { where(:feedback_sent => false) }
   scope :ready_for_feedback, -> { recently_ended.feedback_not_sent }
 
-  def self.find_by_id_and_user(appointment_id, user)
-    appointment_arel = Appointment.arel_table
-    Appointment.where(:id => appointment_id).
-                where(
-                  appointment_arel[:mentor_id].eq(user.id).
-                  or(appointment_arel[:mentee_id].eq(user.id))
-                ).first
 
 
   def start_time

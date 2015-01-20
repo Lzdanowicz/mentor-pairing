@@ -1,7 +1,6 @@
 FactoryGirl.define do
   factory :appointment do
-    mentor  { FactoryGirl.create(:mentor) }
-    mentee  { FactoryGirl.create(:mentee) }
-    availability { FactoryGirl.create(:availability) }
+    association :mentee, factory: :mentee
+    association :availability, factory: :availability
   end
 end

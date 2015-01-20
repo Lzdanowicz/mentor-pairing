@@ -7,7 +7,7 @@ class AppointmentFactory
       request.mentee_id == mentee.id
     end
 
-    appointment = Appointment.create!(:mentee => mentee, :mentor => mentor, :availability => availability)
+    appointment = Appointment.create!(:mentee => mentee, :availability => availability)
 
     # Send all the emails
     mentee.send_appointment_confirmation(appointment)

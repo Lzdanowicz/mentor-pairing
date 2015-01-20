@@ -54,7 +54,7 @@ describe Availability do
 
       it "should fetch availabilities without appointment requests" do
         params = {
-          timezone:"UTC", 
+          timezone:"UTC",
           start_time: Time.new(2013,12,2,0,0,0, "-05:00"),
           mentor: mentor,
           city: 'Chicago'
@@ -101,6 +101,51 @@ describe Availability do
         Availability::CITY_ROUTE_CONSTRAINT.call(city:'san-francisco')
           .should be_true
       end
+    end
+  end
+
+  describe 'abandoned' do
+    it "is abandoned if the start_time is in the past, and there is no appointment association" do
+      availability = FactoryGirl.create(:availability, start_time: 1.day.ago, appointment: nil)
+      Availability.abandoned.should include(availability)
+    end
+
+    it "is not abandoned if the start_time is in the past, and there is an appointment association" do
+      availability = FactoryGirl.create(:availability, start_time: 1.day.ago, appointment: FactoryGirl.create(:appointment))
+      Availability.abandoned.should_not include(availability)
+    end
+
+    it "is not abandoned if the start_time is in the future" do
+      availability = FactoryGirl.create(:availability, start_time: 1.day.from_now, appointment: nil)
+      Availability.abandoned.should_not include(availability)
+    end
+  end
+
+  describe 'starting_between' do
+    let(:start_time) { Time.now }
+
+    before do
+      @availability = FactoryGirl.create(:availability, start_time: start_time, duration: 120)
+    end
+
+    it 'returns an appointment that starts at the given start_time' do
+      Availability.starting_between(start_time, start_time + 1.hour).should include(@availability)
+    end
+
+    it 'returns an appointment that has started but not yet finished' do
+      Availability.starting_between(start_time - 1.hour, start_time + 1.day).should include(@availability)
+    end
+
+    it 'does not return an appointment that has ended before the given start time' do
+      Availability.starting_between(start_time + 1.hour, start_time + 1.day).should_not include(@availability)
+    end
+
+    it 'returns an appointment starts at the given end time' do
+      Availability.starting_between(start_time - 1.hour, start_time).should include(@availability)
+    end
+
+    it 'does not return an appointment starts after the given end time' do
+      Availability.starting_between(start_time - 3.hours, start_time - 2.hours).should_not include(@availability)
     end
   end
 end

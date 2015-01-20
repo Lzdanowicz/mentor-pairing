@@ -1,7 +1,7 @@
 class Availability < ActiveRecord::Base
   include LocaltimeAdjustment
-  
-  CITY_ROUTE_CONSTRAINT = lambda do |req| 
+
+  CITY_ROUTE_CONSTRAINT = lambda do |req|
     loc = Location.find_by_slug(req[:city])
     loc && loc.physical?
   end
@@ -10,6 +10,8 @@ class Availability < ActiveRecord::Base
 
   belongs_to :mentor, :class_name => "User"
   has_many :appointment_requests
+
+  belongs_to :appointment
 
   validates :start_time, :presence => true
   validates :city, inclusion: {in: Location::LOCATION_NAMES }
@@ -20,19 +22,25 @@ class Availability < ActiveRecord::Base
   scope :visible, Proc.new {
     includes(:mentor).
     where("users.activated" => true).
-    where("start_time > ?", Time.now)
+    where("start_time > ?", Time.now).
+    where(appointment_id: nil)
   }
 
   scope :abandoned, -> {
     includes(:mentor).
     where("users.activated" => true).
-    where("start_time < ?", Time.now)
+    where("start_time < ?", Time.now).
+    where(appointment_id: nil)
   }
-  
+
+  scope :starting_between, ->(start_time, end_time) {
+    where(start_time: (start_time..end_time))
+  }
+
   def self.today(tz)
     now = Time.now
-    where('start_time between ? and ?', 
-      now.utc.to_s, 
+    where('start_time between ? and ?',
+      now.utc.to_s,
       utc_eod_for_tz(now,tz).to_s)
   end
 

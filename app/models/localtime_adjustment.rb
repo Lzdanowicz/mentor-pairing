@@ -8,6 +8,6 @@ module LocaltimeAdjustment
   end
 
   def localtime(attribute)
-    self[attribute].in_time_zone(self.timezone)
+    self.public_send(attribute).in_time_zone(self.timezone)
   end
 end

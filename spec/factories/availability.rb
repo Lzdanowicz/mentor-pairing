@@ -7,5 +7,6 @@ FactoryGirl.define do
     start_time  1.week.from_now
     association :mentor, factory: :mentor
     city 'Chicago'
+    location 'DBC'
   end
 end
