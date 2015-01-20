@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140325153732) do
+ActiveRecord::Schema.define(version: 20150120153118) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -54,7 +54,10 @@ ActiveRecord::Schema.define(version: 20140325153732) do
     t.string   "timezone"
     t.string   "location"
     t.string   "city"
+    t.integer  "appointment_id"
   end
+
+  add_index "availabilities", ["appointment_id"], name: "index_availabilities_on_appointment_id", using: :btree
 
   create_table "kudos", force: true do |t|
     t.integer  "appointment_id"
